@@ -116,8 +116,15 @@ object AdbEventMirrorCommand : CliktCommand(name = "adb-event-mirror") {
 		val cpuabiPath = if (cpuabi.contains("x86")) "x86" else "arm"
 		val file = "build/$cpuabiPath/sendevents"
 
-		ProcessBuilder()
+		val pushedFileText = ProcessBuilder()
 			.command("adb", "-s", serial, "push", file, "/data/local/tmp")
+			.start()
+			.inputStream
+			.bufferedReader()
+			.readText()
+
+		if (debug)
+			println(pushedFileText)
 
 		val showTouchesOriginalValue = ProcessBuilder()
 			.command("adb", "-s", serial, "shell", "settings get system show_touches")
@@ -161,6 +168,7 @@ object AdbEventMirrorCommand : CliktCommand(name = "adb-event-mirror") {
 
 		sendCommand("su")
 		sendCommand("cd /data/local/tmp")
+		sendCommand("chmod +x sendevents")
 		sendCommand("./sendevents")
 
 		return object : DeviceConnection {
