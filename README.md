@@ -10,6 +10,16 @@ It works best with emulators which have been created with the exact same configu
 
 ## Usage
 
+#### Optional - C file
+
+For recompile the custom `sendevents.c` file, you must have `make` and `gcc` or `arm-linux-gnueabi-gcc` (depends on your device cpu architecture) available on your shell path. Even so, those files are available in `build` folder
+
+```
+$ make SERIAL="emulator-5556"
+```
+
+#### Kotlin Script
+
 ```
 $ adb devices
 List of devices attached
