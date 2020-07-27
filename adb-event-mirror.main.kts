@@ -106,6 +106,19 @@ object AdbEventMirrorCommand : CliktCommand(name = "adb-event-mirror") {
 			println("[$serial] devices: $inputDevices")
 		}
 
+		val cpuabi = ProcessBuilder()
+			.command("adb", "-s", serial, "shell", "getprop ro.product.cpu.abi")
+			.start()
+			.inputStream
+			.bufferedReader()
+			.readText()
+
+		val cpuabiPath = if (cpuabi.contains("x86")) "x86" else "arm"
+		val file = "build/$cpuabiPath/sendevents"
+
+		ProcessBuilder()
+			.command("adb", "-s", serial, "push", file, "/data/local/tmp")
+
 		val showTouchesOriginalValue = ProcessBuilder()
 			.command("adb", "-s", serial, "shell", "settings get system show_touches")
 			.start()
@@ -147,6 +160,8 @@ object AdbEventMirrorCommand : CliktCommand(name = "adb-event-mirror") {
 		}
 
 		sendCommand("su")
+		sendCommand("cd /data/local/tmp")
+		sendCommand("./sendevents")
 
 		return object : DeviceConnection {
 			private val hostInputToSelfInput = mutableMapOf<String, String>()
@@ -159,10 +174,11 @@ object AdbEventMirrorCommand : CliktCommand(name = "adb-event-mirror") {
 					}
 					result
 				}
-				sendCommand("sendevent $inputDevice $type $code $value")
+				sendCommand("$inputDevice $type $code $value")
 			}
 
 			override fun detach() {
+				sendCommand("exit") //From C custom script
 				sendCommand("exit") // From 'su'
 				sendCommand("exit") // From 'shell'
 				process.waitFor()
